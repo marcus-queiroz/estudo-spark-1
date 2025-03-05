@@ -9,7 +9,7 @@ bronze_data_dir = os.path.join(base_dir, "data", "bronze")
 # Criação da Spark Session com Delta Lake
 spark = SparkSession.builder \
     .appName("Camada Bronze - Ingestão de Dados Brutos") \
-    .config("spark.jars.packages", "io.delta:delta-core_2.12:2.1.0,org.apache.spark:spark-sql_2.12:3.3.2") \
+    .config("spark.jars.packages", "io.delta:delta-core_2.12:2.4.0") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.databricks.delta.allowArbitraryProperties", "true") \
@@ -55,8 +55,13 @@ def save_dataframe_safely(df, path):
 # Criar diretório de destino se não existir
 os.makedirs(bronze_data_dir, exist_ok=True)
 
+if not os.access(bronze_data_dir, os.W_OK):
+    print(f"Erro: Sem permissão de escrita no diretório {bronze_data_dir}")
+    
 save_dataframe_safely(orders_df, os.path.join(bronze_data_dir, "Orders"))
 save_dataframe_safely(customers_df, os.path.join(bronze_data_dir, "Customers"))
 save_dataframe_safely(inventory_movements_df, os.path.join(bronze_data_dir, "Inventory_Movements"))
+
+
 
 spark.stop()
