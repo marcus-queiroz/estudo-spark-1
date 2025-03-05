@@ -9,9 +9,11 @@ bronze_data_dir = os.path.join(base_dir, "data", "bronze")
 # Criação da Spark Session com Delta Lake
 spark = SparkSession.builder \
     .appName("Camada Bronze - Ingestão de Dados Brutos") \
-    .config("spark.jars.packages", "io.delta:delta-core_2.12:2.1.0") \
+    .config("spark.jars.packages", "io.delta:delta-core_2.12:2.1.0,org.apache.spark:spark-sql_2.12:3.3.2") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+    .config("spark.databricks.delta.allowArbitraryProperties", "true") \
+    .config("spark.sql.legacy.createHiveTableByDefault", "false") \
     .getOrCreate()
 
 # Leitura dos dados brutos (arquivos CSV e JSON)
@@ -38,7 +40,12 @@ inventory_movements_df = read_csv_safely(spark, os.path.join(raw_data_dir, "Inve
 def save_dataframe_safely(df, path):
     if df is not None:
         try:
-            df.write.format("delta").mode("overwrite").save(path)
+            # Adicionar opções explícitas para Delta Lake
+            df.write \
+                .format("delta") \
+                .mode("overwrite") \
+                .option("overwriteSchema", "true") \
+                .save(path)
             print(f"Dados salvos com sucesso em {path}")
         except Exception as e:
             print(f"Erro ao salvar dados em {path}: {e}")
