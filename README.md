@@ -1,8 +1,11 @@
-# Documentação dos Subprojetos
+# Projetos de exemplo
 
-Este documento fornece uma visão geral de cada subprojeto contido no diretório `exemplos-conceito`.
+Este projeto tem o objetivo de ser uma coleção de scripts voltados a montagem de exemplos que facilitem o aprendizado de conceitos complexos.
+A ideia é criar um material referência sobre Spark, Deltalake, DuckDB. Da perspectiva de técnicas de modelagem comuns em engenharia de dados.
 
-## Subprojetos
+
+## exemplos-conceito
+Cada subprojeto é projetado para ser executado de forma independente, permitindo que os usuários explorem e modifiquem os exemplos conforme necessário para aprender e aplicar conceitos do Apache Spark.
 
 - **01-data**: Contém exemplos de manipulação de dados básicos, incluindo leitura e escrita de arquivos JSON.
 - **02-exemplo.py**: Focado em validação de dados JSON complexos, abordando técnicas de verificação de integridade e estrutura.
@@ -15,18 +18,6 @@ Este documento fornece uma visão geral de cada subprojeto contido no diretório
 - **12-data**: Integração de dados de múltiplas fontes, demonstrando técnicas de fusão e agregação.
 - **13-data**: Análise de dados avançada com Spark SQL, incluindo consultas complexas e otimizações.
 
-Cada subprojeto é projetado para ser executado de forma independente, permitindo que os usuários explorem e modifiquem os exemplos conforme necessário para aprender e aplicar conceitos do Apache Spark.
-
-## Material de Apoio
-
-O diretório `material-apoio` contém recursos adicionais que complementam os exemplos práticos. Estes materiais podem incluir:
-
-- **Tutoriais**: Guias passo a passo para ajudar na compreensão dos conceitos abordados nos exemplos.
-- **Slides**: Apresentações que resumem os principais pontos teóricos.
-- **Artigos**: Documentos que exploram em profundidade tópicos específicos relacionados ao uso do Apache Spark.
-- **Scripts Auxiliares**: Ferramentas e scripts que facilitam a execução e teste dos exemplos.
-
-Esses materiais são projetados para fornecer um contexto adicional e suporte ao aprendizado dos conceitos apresentados nos subprojetos.
 
 ## Mini Projeto
 
@@ -41,3 +32,9 @@ O diretório `mini-projeto` contém um projeto prático que aplica conceitos ava
 - **test_data_pipeline.py**: Scripts de teste para garantir a funcionalidade correta do pipeline de dados.
 
 Este mini projeto é projetado para ser um exemplo completo de como construir e gerenciar um pipeline de dados usando Apache Spark, desde a ingestão até a análise.
+
+
+
+## Material de Apoio
+
+O diretório `material-apoio` contém recursos adicionais que complementam os exemplos práticos. Esses materiais são projetados para fornecer um contexto adicional e suporte ao aprendizado dos conceitos apresentados nos subprojetos.
