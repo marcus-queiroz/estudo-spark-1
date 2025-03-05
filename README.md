@@ -19,7 +19,7 @@ Cada subprojeto é projetado para ser executado de forma independente, permitind
 - **13-data**: Análise de dados avançada com Spark SQL, incluindo consultas complexas e otimizações.
 
 
-## Mini Projeto
+## mini-projeto
 
 O diretório `mini-projeto` contém um projeto prático que aplica conceitos avançados do Apache Spark em um cenário realista. Este projeto inclui:
 
