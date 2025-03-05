@@ -1,3 +1,10 @@
+"""
+Este script contém testes para verificar a integridade dos dados no pipeline.
+Arquivos importados: orders.csv, customers.json, inventory_movements.csv, products.csv, forecasted_sales.csv
+Resultado: Testes de integridade dos dados executados com pytest.
+Verificação: Execute 'pytest test_data_pipeline.py' para verificar os resultados dos testes.
+"""
+
 import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col

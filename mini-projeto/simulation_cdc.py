@@ -1,3 +1,10 @@
+"""
+Este script simula o Change Data Capture (CDC) para dados de pedidos.
+Arquivos importados: new_orders.csv
+Resultado: Dados de pedidos atualizados na camada Bronze e Silver.
+Verificação: Use o método show() para visualizar os dados atualizados na camada Silver.
+"""
+
 from pyspark.sql import SparkSession
 from delta.tables import DeltaTable
 from pyspark.sql.functions import *

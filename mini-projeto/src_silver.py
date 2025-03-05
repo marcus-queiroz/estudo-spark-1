@@ -1,3 +1,10 @@
+"""
+Este script transforma e integra dados na camada Silver.
+Arquivos importados: orders_incremental.csv, inventory_movements_incremental.csv
+Resultado: Dados transformados e salvos no diretório 'silver' em formato Delta.
+Verificação: Use o método show() para visualizar os dados carregados na camada Silver.
+"""
+
 from pyspark.sql import SparkSession
 from delta.tables import DeltaTable
 from pyspark.sql.functions import col, expr, to_date

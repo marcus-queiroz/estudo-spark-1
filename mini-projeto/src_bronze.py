@@ -1,3 +1,10 @@
+"""
+Este script realiza a ingestão de dados brutos na camada Bronze.
+Arquivos importados: Orders.csv, Customers.csv, Inventory_Movements.csv
+Resultado: Dados salvos no diretório 'bronze' em formato Delta.
+Verificação: Confirme a presença dos arquivos Delta no diretório 'bronze'.
+"""
+
 from pyspark.sql import SparkSession
 import os
 

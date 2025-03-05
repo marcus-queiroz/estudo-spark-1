@@ -1,3 +1,10 @@
+"""
+Este script aplica Slowly Changing Dimensions (SCD) Tipo 2 para dados de clientes.
+Arquivos importados: customers_initial.json
+Resultado: Dados de clientes atualizados na camada Silver com histórico de mudanças.
+Verificação: Use o método show() para visualizar os dados de clientes após a aplicação do SCD Tipo 2.
+"""
+
 from pyspark.sql import SparkSession
 from delta.tables import DeltaTable
 from pyspark.sql.functions import col, current_date, lit, expr

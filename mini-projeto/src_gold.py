@@ -1,3 +1,10 @@
+"""
+Este script gera relatórios de vendas na camada Gold.
+Arquivos importados: Dados da camada Silver (customers, orders, inventory_movements)
+Resultado: Relatórios de vendas otimizados salvos no diretório 'gold'.
+Verificação: Use o método show() para visualizar o relatório de vendas otimizado.
+"""
+
 from pyspark.sql import SparkSession
 from delta.tables import DeltaTable
 from pyspark.sql.functions import col
