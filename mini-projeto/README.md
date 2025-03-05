@@ -14,7 +14,7 @@ O Apache Spark é uma plataforma de processamento de dados em larga escala que p
 - Apache Spark instalado e configurado.
 - Python 3.x instalado.
 - Delta Lake configurado no ambiente Spark.
-- Dependências adicionais listadas em `requirements.txt`.
+- Dependências adicionais listadas em `pyproject.toml`.
 
 ## **Objetivos do Projeto**
 
@@ -153,15 +153,7 @@ pip install pytest
 pytest test_data_pipeline.py
 ```
 
-## Contribuição e Suporte
 
-Contribuições são bem-vindas! Para contribuir, faça um fork do repositório e envie um pull request. Para suporte, abra uma issue no GitHub.
-
-## Licença
-
-Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.
-
-Este documento foi atualizado para refletir a estrutura e melhorias no projeto, garantindo clareza e boas práticas para a execução do pipeline de dados.
 
 
 
