@@ -108,6 +108,20 @@ delta_table_gold = DeltaTable.forPath(spark, gold_sales_report_path)
 delta_table_gold.optimize().executeZOrderBy("order_date")
 ```
 
+## **Descrição dos Scripts**
+
+- **src_bronze.py**: Realiza a ingestão de dados brutos na camada Bronze. Importa os arquivos `Orders.csv`, `Customers.csv`, e `Inventory_Movements.csv`. Verifique a presença dos arquivos Delta no diretório 'bronze' para confirmar a execução.
+
+- **src_silver.py**: Transforma e integra dados na camada Silver. Importa `orders_incremental.csv` e `inventory_movements_incremental.csv`. Use o método `show()` para visualizar os dados carregados na camada Silver.
+
+- **src_gold.py**: Gera relatórios de vendas na camada Gold. Utiliza dados da camada Silver. Use o método `show()` para visualizar o relatório de vendas otimizado.
+
+- **simulation_cdc.py**: Simula o Change Data Capture (CDC) para dados de pedidos. Importa `new_orders.csv`. Use o método `show()` para visualizar os dados atualizados na camada Silver.
+
+- **simulation_scd.py**: Aplica Slowly Changing Dimensions (SCD) Tipo 2 para dados de clientes. Importa `customers_initial.json`. Use o método `show()` para visualizar os dados de clientes após a aplicação do SCD Tipo 2.
+
+- **test_data_pipeline.py**: Contém testes para verificar a integridade dos dados no pipeline. Execute `pytest test_data_pipeline.py` para verificar os resultados dos testes.
+
 ## **Fluxo de Execução**
 
 1. **Bronze**:
