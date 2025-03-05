@@ -35,6 +35,6 @@ Este mini projeto é projetado para ser um exemplo completo de como construir e 
 
 
 
-## Material de Apoio
+## material-apoio
 
 O diretório `material-apoio` contém recursos adicionais que complementam os exemplos práticos. Esses materiais são projetados para fornecer um contexto adicional e suporte ao aprendizado dos conceitos apresentados nos subprojetos.
