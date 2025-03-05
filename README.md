@@ -16,3 +16,14 @@ Este documento fornece uma visão geral de cada subprojeto contido no diretório
 - **13-data**: Análise de dados avançada com Spark SQL, incluindo consultas complexas e otimizações.
 
 Cada subprojeto é projetado para ser executado de forma independente, permitindo que os usuários explorem e modifiquem os exemplos conforme necessário para aprender e aplicar conceitos do Apache Spark.
+
+## Material de Apoio
+
+O diretório `material-apoio` contém recursos adicionais que complementam os exemplos práticos. Estes materiais podem incluir:
+
+- **Tutoriais**: Guias passo a passo para ajudar na compreensão dos conceitos abordados nos exemplos.
+- **Slides**: Apresentações que resumem os principais pontos teóricos.
+- **Artigos**: Documentos que exploram em profundidade tópicos específicos relacionados ao uso do Apache Spark.
+- **Scripts Auxiliares**: Ferramentas e scripts que facilitam a execução e teste dos exemplos.
+
+Esses materiais são projetados para fornecer um contexto adicional e suporte ao aprendizado dos conceitos apresentados nos subprojetos.
