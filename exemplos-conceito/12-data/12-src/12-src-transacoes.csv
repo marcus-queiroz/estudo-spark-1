@@ -1,0 +1,5 @@
+transacao_id,cliente_id,valor,data,categoria
+1,1,500.0,2024-01-01,Alimentos
+2,2,300.0,2024-01-02,Eletrônicos
+3,1,200.0,2024-01-03,Alimentos
+4,3,1500.0,2024-01-04,Viagem
