@@ -1,7 +1,7 @@
 # Projetos de exemplo
 
 Este projeto tem o objetivo de ser uma coleção de scripts voltados a montagem de exemplos que facilitem o aprendizado de conceitos complexos.
-A ideia é criar um material referência sobre Spark, Deltalake, DuckDB. Da perspectiva de técnicas de modelagem comuns em engenharia de dados.
+A ideia é criar um material referência sobre **`Spark`**, **`Deltalake`** e **`DuckDB`**. Da perspectiva de técnicas de modelagem comuns em engenharia de dados.
 
 
 ## exemplos-conceito
