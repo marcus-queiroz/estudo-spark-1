@@ -27,3 +27,17 @@ O diretório `material-apoio` contém recursos adicionais que complementam os ex
 - **Scripts Auxiliares**: Ferramentas e scripts que facilitam a execução e teste dos exemplos.
 
 Esses materiais são projetados para fornecer um contexto adicional e suporte ao aprendizado dos conceitos apresentados nos subprojetos.
+
+## Mini Projeto
+
+O diretório `mini-projeto` contém um projeto prático que aplica conceitos avançados do Apache Spark em um cenário realista. Este projeto inclui:
+
+- **simulation_cdc.py**: Implementa a lógica de Change Data Capture (CDC) para gerenciar atualizações incrementais em tabelas Delta.
+- **simulation_cdc_scd.py**: Focado na aplicação de Slowly Changing Dimensions (SCD) tipo 2, permitindo o rastreamento de mudanças históricas nos dados.
+- **simulation_scd.py**: Aplica técnicas de SCD tipo 2 em um contexto de dados simulado, demonstrando como gerenciar dados históricos.
+- **src_bronze.py**: Contém funções para leitura e escrita segura de dados na camada Bronze, garantindo a integridade dos dados.
+- **src_gold.py**: [Em desenvolvimento] - Planejado para manipulação e análise de dados na camada Gold.
+- **src_silver.py**: Inclui funções para integração e transformação de dados na camada Silver, preparando-os para análise avançada.
+- **test_data_pipeline.py**: Scripts de teste para garantir a funcionalidade correta do pipeline de dados.
+
+Este mini projeto é projetado para ser um exemplo completo de como construir e gerenciar um pipeline de dados usando Apache Spark, desde a ingestão até a análise.
