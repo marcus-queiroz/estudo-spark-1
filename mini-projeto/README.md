@@ -1,12 +1,20 @@
 
 
 
-
 # **Pipeline de Dados - Mini Projeto**
 
 Este projeto é um pipeline de dados que processa informações de vendas, clientes e estoque, organizado em três camadas principais: **Bronze, Silver e Gold**. Ele utiliza **Apache Spark e Delta Lake** para garantir processamento eficiente, versionamento de dados e ingestão incremental.
 
----
+## Introdução
+
+O Apache Spark é uma plataforma de processamento de dados em larga escala que permite a execução de tarefas de análise de dados de forma distribuída. O Delta Lake é uma camada de armazenamento que traz confiabilidade e desempenho ao processamento de dados com Spark, permitindo versionamento e transações ACID.
+
+## Pré-requisitos
+
+- Apache Spark instalado e configurado.
+- Python 3.x instalado.
+- Delta Lake configurado no ambiente Spark.
+- Dependências adicionais listadas em `requirements.txt`.
 
 ## **Objetivos do Projeto**
 
@@ -14,8 +22,6 @@ Este projeto é um pipeline de dados que processa informações de vendas, clien
 - **Implementação de Change Data Capture (CDC) para cargas incrementais**
 - **Uso de Slowly Changing Dimension (SCD) Tipo 2 para manter histórico de clientes**
 - **Otimização de consultas com particionamento e Z-Ordering**
-
----
 
 ## **Arquitetura do Pipeline**
 
@@ -46,8 +52,6 @@ orders_df = spark.read.option("header", True).csv("data/bronze/orders.csv")
 orders_df.write.format("delta").mode("overwrite").save("/delta/bronze/orders")
 ```
 
----
-
 ### **Camada Silver (Transformação e Integração)**
 
 #### **Objetivo**
@@ -77,8 +81,6 @@ def merge_incremental_data(delta_table_path, new_data_df, key_column):
         new_data_df.write.format("delta").mode("overwrite").save(delta_table_path)
 ```
 
----
-
 ### **Camada Gold (Relatórios e Otimização)**
 
 #### **Objetivo**
@@ -106,8 +108,6 @@ delta_table_gold = DeltaTable.forPath(spark, gold_sales_report_path)
 delta_table_gold.optimize().executeZOrderBy("order_date")
 ```
 
----
-
 ## **Fluxo de Execução**
 
 1. **Bronze**:
@@ -118,8 +118,6 @@ delta_table_gold.optimize().executeZOrderBy("order_date")
 3. **Gold**:
     - Execute `poetry run python mini-projeto/src_gold.py` para gerar relatórios agregados.
     - Execute `poetry run python mini-projeto/simulation_scd.py` para aplicar SCD Tipo 2.
-
----
 
 ## **Boas Práticas e Melhorias**
 
@@ -135,8 +133,6 @@ delta_table_gold.optimize().executeZOrderBy("order_date")
 4. **Otimização do CDC**
     
     - Melhorar o merge para evitar sobrescrita desnecessária de registros.
-
----
 
 ## **Execução de Testes**
 
@@ -157,7 +153,13 @@ pip install pytest
 pytest test_data_pipeline.py
 ```
 
----
+## Contribuição e Suporte
+
+Contribuições são bem-vindas! Para contribuir, faça um fork do repositório e envie um pull request. Para suporte, abra uma issue no GitHub.
+
+## Licença
+
+Este projeto está licenciado sob a Licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 Este documento foi atualizado para refletir a estrutura e melhorias no projeto, garantindo clareza e boas práticas para a execução do pipeline de dados.
 
