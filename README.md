@@ -33,7 +33,29 @@ O diretório `mini-projeto-1-spark` contém um projeto prático que aplica conce
 
 Este mini projeto é projetado para ser um exemplo completo de como construir e gerenciar um pipeline de dados usando Apache Spark, desde a ingestão até a análise.
 
+## mini-projeto-2-duckdb
 
+O diretório `mini-projeto-2-duckdb` implementa um pipeline de processamento de dados robusto utilizando DuckDB e Delta Lake, seguindo uma arquitetura de medalhas (Bronze, Silver, Gold):
+
+- **Camadas de Processamento**:
+  1. **Landing Layer (Landing.py)**: Coleta e prepara dados brutos
+  2. **Bronze Layer (Bronze.py)**: Converte dados para Delta Lake, processamento incremental
+  3. **Silver Layer (Silver.py)**: Transforma e enriquece dados, realiza junções
+  4. **Gold Layer (Gold.py)**: Cria dimensões e fatos para data warehouse
+
+- **Características Principais**:
+  - Processamento incremental de dados
+  - Suporte a versionamento com Delta Lake
+  - Transformações de dados em múltiplas etapas
+  - Preparação de dados para análise e visualização
+
+- **Tecnologias Utilizadas**:
+  - Python
+  - DuckDB
+  - Delta Lake
+  - Pandas
+
+Este mini projeto demonstra técnicas avançadas de processamento de dados, com foco em flexibilidade, escalabilidade e gerenciamento de dados históricos.
 
 ## material-apoio
 
