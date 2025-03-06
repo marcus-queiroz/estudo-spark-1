@@ -24,7 +24,7 @@ def escreve_delta(df, tableName, modoEscrita):
     write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta(tableName):
-    return DeltaTable(f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}')
+    return DeltaTable(f'mini-projeto-2-duckdb/data/landing/bike_store/{tableName}')
 
 arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']  # 'order_items', 'orders', 'stocks'
 
