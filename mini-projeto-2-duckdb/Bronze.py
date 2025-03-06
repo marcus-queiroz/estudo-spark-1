@@ -1,17 +1,23 @@
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
+import os
+
 con = duckdb.connect()
 
 def escreve_delta(df, tableName, modoEscrita):
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta(tableName):
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
-    return DeltaTable(path)
+    try:
+        return DeltaTable(path)
+    except Exception:
+        return None
 
-arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']  # 'order_items', 'orders', 'stocks'
+arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores', 'order_items', 'orders', 'stocks']
 
 for tabela in arquivos:
     new_df = con.sql(f"""
@@ -19,25 +25,26 @@ for tabela in arquivos:
     """).to_df()
 
     tabela_dt1 = ler_delta(tabela)
-
-    coluna = ''
-
-    if tabela[-1:] == 'categorie':
-        coluna = 'category'
+    
+    if tabela_dt1 is None:
+        # Se a tabela não existir, cria pela primeira vez
+        escreve_delta(new_df, tabela, 'overwrite')
     else:
-        coluna = tabela[-1:]
-    (
-        tabela_dt1.merge(
-            source=new_df,
-            predicate=f'target.{coluna}_id = source.{coluna}_id',
-            source_alias='source',
-            target_alias='target'
-        ).when_not_matched_insert_all()
-        .execute()
-    )
+        # Lógica de merge existente
+        coluna = 'category' if tabela == 'categories' else tabela[:-1]
+        (
+            tabela_dt1.merge(
+                source=new_df,
+                predicate=f'target.{coluna}_id = source.{coluna}_id',
+                source_alias='source',
+                target_alias='target'
+            ).when_not_matched_insert_all()
+            .execute()
+        )
 
+# Processamento de order_items
 order_items = ler_delta('order_items')
-order_items = order_items.to_pandas()
+order_items = order_items.to_pandas() if order_items is not None else None
 
 df = con.sql("""
             with dlt_order_items AS 
@@ -57,8 +64,9 @@ df = con.sql("""
 if len(df) > 0:
     escreve_delta(df, 'order_items', 'append')
 
+# Processamento de orders
 orders = ler_delta('orders')
-orders = orders.to_pandas()
+orders = orders.to_pandas() if orders is not None else None
 
 df = con.sql("""
             WITH arquivo_orders AS
