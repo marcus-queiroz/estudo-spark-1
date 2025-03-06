@@ -10,9 +10,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-try:
-    con = duckdb.connect()
-    logger.info("Conexão com DuckDB estabelecida com sucesso")
+con = duckdb.connect()
+logger.info("Conexão com DuckDB estabelecida com sucesso")
 
 def escreve_delta_silver(df, tableName, modoEscrita):
     path = f'data/silver/vendas/{tableName}'
@@ -84,4 +83,9 @@ stocks_snapshot = con.sql("""
     """).to_df()
 escreve_delta_silver(stocks_snapshot, 'stocks_snapshot', 'append')
 
-con.close()
+try:
+    con.close()
+    logger.info("Processo concluído com sucesso")
+except Exception as e:
+    logger.error(f"Erro durante a execução: {str(e)}")
+    raise

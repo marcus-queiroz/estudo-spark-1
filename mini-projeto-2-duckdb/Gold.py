@@ -218,11 +218,8 @@ fact_stocks = con.sql("""
 
 escreve_delta_gold(fact_stocks, 'fact_stocks', 'append')
 
-    con.close()
-    logger.info("Processo concluído com sucesso")
-except Exception as e:
-    logger.error(f"Erro durante a execução: {str(e)}")
-    raise
+con.close()
+logger.info("Processo concluído com sucesso")
 
 
 
