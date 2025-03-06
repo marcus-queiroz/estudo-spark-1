@@ -1,7 +1,17 @@
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
+import logging
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 con = duckdb.connect()
+logger.info("Conexão com DuckDB estabelecida com sucesso")
 
 def escreve_delta_gold(df, tableName, modoEscrita):
     path = f'data/gold/vendas/{tableName}'
