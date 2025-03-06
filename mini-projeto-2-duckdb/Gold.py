@@ -1,3 +1,30 @@
+"""
+Módulo de Processamento de Dados - Camada Gold
+
+Este script é responsável por criar dimensões e fatos para um data warehouse.
+Realiza as seguintes tarefas:
+- Leitura de dados da camada Silver
+- Criação de dimensões (produtos, clientes, funcionários, lojas, datas)
+- Geração de fatos de vendas e estoque
+- Armazenamento de dados processados em Delta Lake
+
+Funções Principais:
+- escreve_delta_gold(): Salva dataframes processados
+- ler_delta_gold(): Lê tabelas da camada Gold
+- ler_delta_silver(): Lê tabelas da camada Silver
+
+Fluxo de Processamento:
+1. Carrega dados de orders_sales da camada Silver
+2. Cria dimensões com surrogate keys
+3. Gera fatos de vendas e estoque
+4. Adiciona novos registros incrementalmente
+
+Estratégias:
+- Processamento incremental de dimensões
+- Geração de surrogate keys
+- Junção de dados entre dimensões e fatos
+"""
+
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
@@ -5,15 +32,42 @@ import duckdb
 con = duckdb.connect()
 
 def escreve_delta_gold(df, tableName, modoEscrita):
+    """
+    Salva um DataFrame como tabela Delta Lake na camada Gold.
+    
+    Args:
+        df (DataFrame): Dados a serem salvos
+        tableName (str): Nome da tabela
+        modoEscrita (str): Modo de escrita ('overwrite' ou 'append')
+    """
     path = f'data/gold/vendas/{tableName}'
     write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta_gold(tableName):
+    """
+    Lê uma tabela da camada Gold.
+    
+    Args:
+        tableName (str): Nome da tabela
+    
+    Returns:
+        DataFrame com dados da tabela Gold
+    """
     return DeltaTable(f'data/gold/vendas/{tableName}').to_pandas()
 
 def ler_delta_silver(tableName):
+    """
+    Lê uma tabela da camada Silver.
+    
+    Args:
+        tableName (str): Nome da tabela
+    
+    Returns:
+        DataFrame com dados da tabela Silver
+    """
     return DeltaTable(f'data/silver/vendas/{tableName}').to_pandas()
 
+# Restante do código permanece igual
 orders_sales = ler_delta_silver('orders_sales')
 
 dtl_gold_products = ler_delta_gold('dim_products')
@@ -47,11 +101,10 @@ dim_products = con.sql("""
     WHERE product_id NOT IN (SELECT product_id FROM dt_gold_products)
 """).to_df()
 
-
 escreve_delta_gold(dim_products, 'dim_products', 'append')
 
+# Restante do código permanece igual
 dtl_gold_customers = ler_delta_gold('dim_customers')
-
 
 dim_customers = con.sql("""
     WITH customers as
@@ -77,9 +130,9 @@ dim_customers = con.sql("""
     WHERE customer_id NOT IN (SELECT customer_id FROM dt_gold_customers)
 """).to_df()
 
-#dim_customers
 escreve_delta_gold(dim_customers, 'dim_customers', 'append')
 
+# Restante do código permanece igual
 dtl_gold_staffs = ler_delta_gold('dim_staffs')
 
 dim_staffs = con.sql("""
@@ -106,9 +159,9 @@ dim_staffs = con.sql("""
     WHERE staff_id NOT IN (SELECT staff_id FROM dt_gold_staffs)
 """).to_df()
 
-#dim_staffs
 escreve_delta_gold(dim_staffs, 'dim_staffs', 'append')
 
+# Restante do código permanece igual
 dtl_gold_stores = ler_delta_gold('dim_stores')
 
 dim_stores = con.sql("""
@@ -137,6 +190,7 @@ dim_stores = con.sql("""
 
 escreve_delta_gold(dim_stores, 'dim_stores', 'append')
 
+# Restante do código permanece igual
 dim_date = con.sql("""
     WITH tempo as
     (
@@ -146,7 +200,8 @@ dim_date = con.sql("""
             ,year(generate_series) as year
             ,month(generate_series) as month
             ,day(generate_series) as day
-        FROM generate_series(DATE '2010-01-01', DATE '2030-12-31', INTERVAL '1 DAY')
+        FROM generate_series(DATE '2010-01-01',
+ DATE '2030-12-31', INTERVAL '1 DAY')
     ),
     sk_date as
     (
@@ -161,6 +216,7 @@ dim_date = con.sql("""
 
 escreve_delta_gold(dim_date, 'dim_date', 'append')
 
+# Restante do código permanece igual
 dim_products = ler_delta_gold('dim_products')
 dim_customers = ler_delta_gold('dim_customers')
 dim_staffs = ler_delta_gold('dim_staffs')
@@ -194,6 +250,7 @@ fact_sales = con.sql("""
 
 escreve_delta_gold(fact_sales, 'fact_sales', 'append')
 
+# Restante do código permanece igual
 stocks_snapshot = ler_delta_silver('stocks_snapshot')
 
 dtl_gold_fact_stocks = ler_delta_gold('fact_stocks')
