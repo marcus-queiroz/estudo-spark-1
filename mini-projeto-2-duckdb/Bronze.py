@@ -1,6 +1,22 @@
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
+from pathlib import Path
+import os
+
+# Create directories if they don't exist
+Path("data/landing/bike_store").mkdir(parents=True, exist_ok=True)
+Path("data/bronze/vendas").mkdir(parents=True, exist_ok=True)
+
+# Check for required CSV files
+required_files = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores', 
+                 'order_items', 'orders', 'stocks']
+for file in required_files:
+    csv_path = Path(f"data/landing/bike_store/{file}.csv")
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Arquivo CSV necessário não encontrado: {csv_path}. "
+                               "Certifique-se de que os arquivos CSV estão na pasta correta.")
+
 con = duckdb.connect()
 
 def escreve_delta(df, tableName, modoEscrita):
