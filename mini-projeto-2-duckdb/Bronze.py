@@ -5,14 +5,14 @@ from pathlib import Path
 import os
 
 # Create directories if they don't exist
-Path("data/landing/bike_store").mkdir(parents=True, exist_ok=True)
-Path("data/bronze/vendas").mkdir(parents=True, exist_ok=True)
+Path("mini-projeto-2-duckdb/data/landing/bike_store").mkdir(parents=True, exist_ok=True)
+Path("mini-projeto-2-duckdb/data/bronze/vendas").mkdir(parents=True, exist_ok=True)
 
 # Check for required CSV files
 required_files = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores', 
                  'order_items', 'orders', 'stocks']
 for file in required_files:
-    csv_path = Path(f"data/landing/bike_store/{file}.csv")
+    csv_path = Path(f"mini-projeto-2-duckdb/data/landing/bike_store/{file}.csv")
     if not csv_path.exists():
         raise FileNotFoundError(f"Arquivo CSV necessário não encontrado: {csv_path}. "
                                "Certifique-se de que os arquivos CSV estão na pasta correta.")
@@ -20,17 +20,17 @@ for file in required_files:
 con = duckdb.connect()
 
 def escreve_delta(df, tableName, modoEscrita):
-    path = f'data/bronze/vendas/{tableName}'
+    path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
     write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta(tableName):
-    return DeltaTable(f'data/bronze/vendas/{tableName}')
+    return DeltaTable(f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}')
 
 arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']  # 'order_items', 'orders', 'stocks'
 
 for tabela in arquivos:
     new_df = con.sql(f"""
-        SELECT * FROM 'data/landing/bike_store/{tabela}.csv'
+        SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/{tabela}.csv'
     """).to_df()
 
     tabela_dt1 = ler_delta(tabela)
@@ -63,7 +63,7 @@ df = con.sql("""
             ), 
             arquivo_items AS 
             (
-                select * from 'data/landing/bike_store/order_items.csv'
+                select * from 'mini-projeto-2-duckdb/data/landing/bike_store/order_items.csv'
             )
             SELECT AR.* FROM arquivo_items AR
             LEFT JOIN dlt_order_items DLT
@@ -81,7 +81,7 @@ orders = orders.to_pandas()
 df = con.sql("""
             WITH arquivo_orders AS
             (
-                SELECT * FROM 'data/landing/bike_store/orders.csv'
+                SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
             ),
             dtl_orders AS
             (
@@ -96,7 +96,7 @@ if len(df) > 0:
     escreve_delta(df, 'orders', 'append')
 
 # Processamento dos estoques
-dados = con.sql("SELECT * FROM 'data/landing/bike_store/stocks.csv'").to_df()
+dados = con.sql("SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/stocks.csv'").to_df()
 escreve_delta(dados, 'stocks', 'overwrite')
 
 con.close()
