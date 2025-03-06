@@ -72,13 +72,52 @@ order_items = ler_delta('order_items')
 order_items = order_items.to_pandas()
 
 df = con.sql("""
-    with dlt_order_items AS (
-        select * from order_items
-    ), arquivo_items AS (
-        select * from 'abfss://landing/bike_store/order_items.csv'
-    )
-    SELECT AR.* FROM arquivo_order_items AR
-    LEFT JOIN dlt_order_items DLT
-    ON hash(AR.order_id, AR.item_id, AR.product_id) = hash(DLT.order_id, DLT.item_id, DLT.product_id)
-    WHERE DLT.order_id IS NULL
-""")
+            with dlt_order_items AS 
+            (
+                select * from order_items
+            ), 
+            arquivo_items AS 
+            (
+                select * from 'abfss://landing/bike_store/order_items.csv'
+            )
+            SELECT AR.* FROM arquivo_order_items AR
+            LEFT JOIN dlt_order_items DLT
+            ON hash(AR.order_id, AR.item_id, AR.product_id) = hash(DLT.order_id, DLT.item_id, DLT.product_id)
+            WHERE DLT.order_id IS NULL
+            """)
+
+if len(df) > 0:
+    escreve_delta(df, 'order_items', 'append')
+
+
+
+
+orders = ler_delta('orders')
+orders = orders.to_pandas()
+
+df = con.sql("""
+            WITH arquivo_orders AS
+            (
+                SELECT * FROM 'abfss://landing/bike_store/orders.csv'
+            ),
+            dtl_orders AS
+            (
+                SELECT MAX(order_date) AS order_date FROM orders
+            )
+
+            SELECT ar.* FROM arquivo_orders ar
+            WHERE ar.order_date > (SELECT order_date FROM dtl_orders)
+            """)
+
+if len(df) > 0:
+    escreve_delta(df, 'orders', 'append')
+
+# Executando outra consulta
+dados = con.sql("SELECT * FROM 'abfss://landing/bike_store/stocks.csv'").to_df()
+escreve_delta(dados, 'stocks', 'overwrite')
+
+con.close()
+
+
+
+

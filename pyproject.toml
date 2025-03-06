@@ -23,3 +23,6 @@ package-mode = false
 python = "^3.12"
 pyspark = "3.4.0"
 delta-spark = "2.4.0"
+deltalake = "^0.25.4"
+duckdb = "^1.2.1"
+pandas = "^2.2.3"
