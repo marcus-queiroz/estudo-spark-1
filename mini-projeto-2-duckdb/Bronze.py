@@ -24,30 +24,41 @@ def escreve_delta(df, tableName, modoEscrita):
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
     write_deltalake(path, df, mode=modoEscrita)
 
+def ler_csv(tableName):
+    """Lê arquivo CSV da landing zone"""
+    path = f'mini-projeto-2-duckdb/data/landing/bike_store/{tableName}.csv'
+    if not Path(path).exists():
+        raise FileNotFoundError(f"Arquivo CSV não encontrado: {path}")
+    return con.sql(f"SELECT * FROM '{path}'").to_df()
+
 def ler_delta(tableName):
+    """Lê tabela Delta da bronze zone"""
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
     if not Path(path).exists():
-        # Cria tabela vazia se não existir
+        # Se não existe, cria tabela vazia
         write_deltalake(path, pd.DataFrame(), mode='append')
     return DeltaTable(path)
 
-arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']  # 'order_items', 'orders', 'stocks'
-
-for tabela in arquivos:
-    new_df = con.sql(f"""
-        SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/{tabela}.csv'
-    """).to_df()
-
-    tabela_dt1 = ler_delta(tabela)
-
-    coluna = ''
-
-    if tabela[-1:] == 'categorie':
-        coluna = 'category'
-    else:
-        coluna = tabela[-1:]
+def processar_tabela(tabela):
+    """Processa uma tabela individual"""
+    # Ler dados novos do CSV
+    new_df = ler_csv(tabela)
+    
+    # Ler tabela Delta existente
+    delta_table = ler_delta(tabela)
+    existing_df = delta_table.to_pandas()
+    
+    # Se tabela está vazia, apenas insere todos os dados
+    if existing_df.empty:
+        write_deltalake(delta_table.table_uri, new_df, mode='overwrite')
+        return
+    
+    # Determina coluna chave
+    coluna = 'category' if tabela == 'categories' else tabela[:-1]
+    
+    # Faz merge dos dados
     (
-        tabela_dt1.merge(
+        delta_table.merge(
             source=new_df,
             predicate=f'target.{coluna}_id = source.{coluna}_id',
             source_alias='source',
@@ -56,52 +67,68 @@ for tabela in arquivos:
         .execute()
     )
 
+# Processa tabelas principais
+for tabela in ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']:
+    processar_tabela(tabela)
 
 
-order_items = ler_delta('order_items')
-order_items = order_items.to_pandas()
 
-df = con.sql("""
-            with dlt_order_items AS 
-            (
-                select * from order_items
-            ), 
-            arquivo_items AS 
-            (
-                select * from 'mini-projeto-2-duckdb/data/landing/bike_store/order_items.csv'
-            )
-            SELECT AR.* FROM arquivo_items AR
-            LEFT JOIN dlt_order_items DLT
-            ON hash(AR.order_id, AR.item_id, AR.product_id) = hash(DLT.order_id, DLT.item_id, DLT.product_id)
-            WHERE DLT.order_id IS NULL
-            """)
+# Processamento especial para order_items
+order_items_df = ler_csv('order_items')
+existing_order_items = ler_delta('order_items').to_pandas()
 
-if len(df) > 0:
-    escreve_delta(df, 'order_items', 'append')
+if existing_order_items.empty:
+    write_deltalake(
+        'mini-projeto-2-duckdb/data/bronze/vendas/order_items',
+        order_items_df,
+        mode='overwrite'
+    )
+else:
+    # Faz merge usando hash para identificar novos itens
+    new_items = con.sql(f"""
+        SELECT source.* 
+        FROM order_items_df AS source
+        LEFT JOIN existing_order_items AS target
+        ON hash(source.order_id, source.item_id, source.product_id) = 
+           hash(target.order_id, target.item_id, target.product_id)
+        WHERE target.order_id IS NULL
+    """).to_df()
+    
+    if not new_items.empty:
+        write_deltalake(
+            'mini-projeto-2-duckdb/data/bronze/vendas/order_items',
+            new_items,
+            mode='append'
+        )
 
-# Processamento dos pedidos
-orders = ler_delta('orders')
-orders = orders.to_pandas()
+# Processamento especial para orders
+orders_df = ler_csv('orders')
+existing_orders = ler_delta('orders').to_pandas()
 
-df = con.sql("""
-            WITH arquivo_orders AS
-            (
-                SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
-            ),
-            dtl_orders AS
-            (
-                SELECT MAX(order_date) AS order_date FROM orders
-            )
+if existing_orders.empty:
+    write_deltalake(
+        'mini-projeto-2-duckdb/data/bronze/vendas/orders',
+        orders_df,
+        mode='overwrite'
+    )
+else:
+    # Filtra apenas pedidos mais recentes
+    max_date = existing_orders['order_date'].max()
+    new_orders = orders_df[orders_df['order_date'] > max_date]
+    
+    if not new_orders.empty:
+        write_deltalake(
+            'mini-projeto-2-duckdb/data/bronze/vendas/orders',
+            new_orders,
+            mode='append'
+        )
 
-            SELECT ar.* FROM arquivo_orders ar
-            WHERE ar.order_date > (SELECT order_date FROM dtl_orders)
-            """)
-
-if len(df) > 0:
-    escreve_delta(df, 'orders', 'append')
-
-# Processamento dos estoques
-dados = con.sql("SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/stocks.csv'").to_df()
-escreve_delta(dados, 'stocks', 'overwrite')
+# Processamento dos estoques (sempre sobrescreve)
+stocks_df = ler_csv('stocks')
+write_deltalake(
+    'mini-projeto-2-duckdb/data/bronze/vendas/stocks',
+    stocks_df,
+    mode='overwrite'
+)
 
 con.close()
