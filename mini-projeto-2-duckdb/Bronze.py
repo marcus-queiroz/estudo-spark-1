@@ -3,48 +3,18 @@ from deltalake import DeltaTable
 import duckdb
 con = duckdb.connect()
 
-con.execute('LOAD azure;')
-
-con.sql("""
-    CREATE SECRET azure_spn
-    TYPE AZURE,
-    PROVIDER SERVICE_PRINCIPAL,
-    TENANT_ID '2267ad65-49e0-40a1-83fb-2d3af97de11e',
-    CLIENT_ID 'ea72d09e-057a-4f0f-8b24-6240d5ba5ed4',
-    CLIENT_SECRET 'lxe80~gqhvwFrnKkwP6PQemA4pE4CuatZVRWGaj5',
-    ACCOUNT_NAME 'lakehousecursoch'
-);
-""")
-
-storage_options = {
-    'AZURE_STORAGE_ACCOUNT_NAME': 'lakehousecursoch',
-    'AZURE_STORAGE_ACCESS_KEY': 'xGwP03zmc38YtWgjtsr4G6nEFgJsXvLhEa0l+jYo6suRSJOogJkDbCTE++iX9thaVZOUsd00yEk+AstB3hXmqQ==',
-    'AZURE_STORAGE_CLIENT_ID': 'ea72d09e-057a-4f0f-8b24-6240d5ba5ed4',
-    'AZURE_STORAGE_CLIENT_SECRET': 'lxe80~gqhvwFrnKkwP6PQemA4pE4CuatZVRWGaj5',
-    'AZURE_STORAGE_TENANT_ID': '2267ad65-49e0-40a1-83fb-2d3af97de11e',
-}
-
 def escreve_delta(df, tableName, modoEscrita):
-    uri = f'az://bronze/vendas/{tableName}'
-
-    write_deltalake(
-        uri,
-        df,
-        mode=modoEscrita,
-        storage_options=storage_options
-    )
+    path = f'data/bronze/vendas/{tableName}'
+    write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta(tableName):
-    uri = f'az://bronze/vendas/{tableName}'
-
-    dt = DeltaTable(uri, storage_options=storage_options)
-    return dt
+    return DeltaTable(f'data/bronze/vendas/{tableName}')
 
 arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']  # 'order_items', 'orders', 'stocks'
 
 for tabela in arquivos:
     new_df = con.sql(f"""
-        SELECT * FROM 'abfss://landing/bike_store/{tabela}.csv'
+        SELECT * FROM 'data/landing/bike_store/{tabela}.csv'
     """).to_df()
 
     tabela_dt1 = ler_delta(tabela)
