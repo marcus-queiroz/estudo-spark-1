@@ -4,72 +4,98 @@ import duckdb
 from pathlib import Path
 import os
 import pandas as pd
+import logging
 
-# Create directories if they don't exist
-Path("mini-projeto-2-duckdb/data/landing/bike_store").mkdir(parents=True, exist_ok=True)
-Path("mini-projeto-2-duckdb/data/bronze/vendas").mkdir(parents=True, exist_ok=True)
+# Configuração básica de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# Check for required CSV files
-required_files = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores', 
-                 'order_items', 'orders', 'stocks']
-for file in required_files:
-    csv_path = Path(f"mini-projeto-2-duckdb/data/landing/bike_store/{file}.csv")
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Arquivo CSV necessário não encontrado: {csv_path}. "
-                               "Certifique-se de que os arquivos CSV estão na pasta correta.")
+def setup_directories():
+    """Cria os diretórios necessários"""
+    Path("mini-projeto-2-duckdb/data/landing/bike_store").mkdir(parents=True, exist_ok=True)
+    Path("mini-projeto-2-duckdb/data/bronze/vendas").mkdir(parents=True, exist_ok=True)
 
-con = duckdb.connect()
-
-def escreve_delta(df, tableName, modoEscrita):
-    path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
-    write_deltalake(path, df, mode=modoEscrita)
-
-def ler_csv(tableName):
-    """Lê arquivo CSV da landing zone"""
-    path = f'mini-projeto-2-duckdb/data/landing/bike_store/{tableName}.csv'
-    if not Path(path).exists():
-        raise FileNotFoundError(f"Arquivo CSV não encontrado: {path}")
-    return con.sql(f"SELECT * FROM '{path}'").to_df()
-
-def ler_delta(tableName):
-    """Lê tabela Delta da bronze zone"""
-    path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
-    if not Path(path).exists():
-        # Se não existe, cria tabela vazia
-        write_deltalake(path, pd.DataFrame(), mode='append')
-    return DeltaTable(path)
-
-def processar_tabela(tabela):
-    """Processa uma tabela individual"""
-    # Ler dados novos do CSV
-    new_df = ler_csv(tabela)
+def verificar_arquivos():
+    """Verifica se todos os arquivos CSV necessários existem"""
+    required_files = ['brands', 'categories', 'customers', 'products', 
+                     'staffs', 'stores', 'order_items', 'orders', 'stocks']
     
-    # Ler tabela Delta existente
-    delta_table = ler_delta(tabela)
-    existing_df = delta_table.to_pandas()
-    
-    # Se tabela está vazia, apenas insere todos os dados
-    if existing_df.empty:
-        write_deltalake(delta_table.table_uri, new_df, mode='overwrite')
-        return
-    
-    # Determina coluna chave
-    coluna = 'category' if tabela == 'categories' else tabela[:-1]
-    
-    # Faz merge dos dados
-    (
-        delta_table.merge(
-            source=new_df,
-            predicate=f'target.{coluna}_id = source.{coluna}_id',
-            source_alias='source',
-            target_alias='target'
-        ).when_not_matched_insert_all()
-        .execute()
-    )
+    for file in required_files:
+        csv_path = Path(f"mini-projeto-2-duckdb/data/landing/bike_store/{file}.csv")
+        if not csv_path.exists():
+            raise FileNotFoundError(
+                f"Arquivo CSV necessário não encontrado: {csv_path}\n"
+                "Certifique-se de que os arquivos CSV estão na pasta correta."
+            )
+    logger.info("Todos os arquivos CSV necessários foram encontrados")
 
-# Processa tabelas principais
-for tabela in ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']:
-    processar_tabela(tabela)
+def processar_tabela_simples(tabela, con):
+    """Processa tabelas com lógica simples de merge"""
+    try:
+        logger.info(f"Processando tabela: {tabela}")
+        
+        # Ler CSV
+        df_csv = con.sql(f"""
+            SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/{tabela}.csv'
+        """).to_df()
+        
+        # Determinar coluna chave
+        coluna = 'category' if tabela == 'categories' else tabela[:-1]
+        
+        # Caminho da tabela Delta
+        delta_path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tabela}'
+        
+        # Se a tabela Delta não existe, cria com os dados iniciais
+        if not Path(delta_path).exists():
+            write_deltalake(delta_path, df_csv, mode='overwrite')
+            logger.info(f"Tabela {tabela} criada com sucesso")
+            return
+        
+        # Se já existe, faz o merge
+        delta_table = DeltaTable(delta_path)
+        (
+            delta_table.merge(
+                source=df_csv,
+                predicate=f'target.{coluna}_id = source.{coluna}_id',
+                source_alias='source',
+                target_alias='target'
+            )
+            .when_not_matched_insert_all()
+            .execute()
+        )
+        logger.info(f"Tabela {tabela} atualizada com sucesso")
+        
+    except Exception as e:
+        logger.error(f"Erro ao processar tabela {tabela}: {str(e)}")
+        raise
+
+def main():
+    """Função principal do script"""
+    try:
+        setup_directories()
+        verificar_arquivos()
+        
+        con = duckdb.connect()
+        
+        # Processar tabelas principais
+        tabelas_principais = ['brands', 'categories', 'customers', 
+                             'products', 'staffs', 'stores']
+        
+        for tabela in tabelas_principais:
+            processar_tabela_simples(tabela, con)
+            
+        con.close()
+        logger.info("Processamento concluído com sucesso")
+        
+    except Exception as e:
+        logger.error(f"Erro durante a execução: {str(e)}")
+        raise
+
+if __name__ == "__main__":
+    main()
 
 
 
