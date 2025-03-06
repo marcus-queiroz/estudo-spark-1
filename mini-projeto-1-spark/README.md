@@ -125,13 +125,13 @@ delta_table_gold.optimize().executeZOrderBy("order_date")
 ## **Fluxo de Execução**
 
 1. **Bronze**:
-    - Execute `poetry run python mini-projeto/src_bronze.py` para ingestão de dados brutos.
+    - Execute `poetry run python mini-projeto-1-spark/src_bronze.py` para ingestão de dados brutos.
 2. **Silver**:
-    - Execute `poetry run python mini-projeto/src_silver.py` para transformação e limpeza.
-    - Execute `poetry run python mini-projeto/simulation_cdc.py` para carga incremental.
+    - Execute `poetry run python mini-projeto-spark/src_silver.py` para transformação e limpeza.
+    - Execute `poetry run python mini-projeto-spark/simulation_cdc.py` para carga incremental.
 3. **Gold**:
-    - Execute `poetry run python mini-projeto/src_gold.py` para gerar relatórios agregados.
-    - Execute `poetry run python mini-projeto/simulation_scd.py` para aplicar SCD Tipo 2.
+    - Execute `poetry run python mini-projeto-spark/src_gold.py` para gerar relatórios agregados.
+    - Execute `poetry run python mini-projeto-spark/simulation_scd.py` para aplicar SCD Tipo 2.
 
 ## **Boas Práticas e Melhorias**
 
