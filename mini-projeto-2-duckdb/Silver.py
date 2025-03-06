@@ -1,17 +1,10 @@
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
-import logging
 
-# Configurar logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 con = duckdb.connect()
-logger.info("Conexão com DuckDB estabelecida com sucesso")
+
 
 def escreve_delta_silver(df, tableName, modoEscrita):
     path = f'data/silver/vendas/{tableName}'
@@ -83,9 +76,7 @@ stocks_snapshot = con.sql("""
     """).to_df()
 escreve_delta_silver(stocks_snapshot, 'stocks_snapshot', 'append')
 
-try:
-    con.close()
-    logger.info("Processo concluído com sucesso")
-except Exception as e:
-    logger.error(f"Erro durante a execução: {str(e)}")
-    raise
+
+con.close()
+
+
