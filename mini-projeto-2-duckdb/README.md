@@ -189,6 +189,4 @@ mini-projeto-2-duckdb/
 - Suporta adição de novos registros sem reprocessar dados existentes
 - Utiliza Delta Lake para versionamento e gerenciamento de dados
 
-## Licença
 
-[Especificar licença do projeto]

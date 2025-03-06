@@ -21,7 +21,7 @@ Cada subprojeto é projetado para ser executado de forma independente, permitind
 
 ## mini-projeto-1-spark
 
-O diretório `mini-projeto` contém um projeto prático que aplica conceitos avançados do Apache Spark em um cenário realista. Este projeto inclui:
+O diretório `mini-projeto-1-spark` contém um projeto prático que aplica conceitos avançados do Apache Spark em um cenário realista. Este projeto inclui:
 
 - **simulation_cdc.py**: Implementa a lógica de Change Data Capture (CDC) para gerenciar atualizações incrementais em tabelas Delta.
 - **simulation_cdc_scd.py**: Focado na aplicação de Slowly Changing Dimensions (SCD) tipo 2, permitindo o rastreamento de mudanças históricas nos dados.
