@@ -3,6 +3,7 @@ from deltalake import DeltaTable
 import duckdb
 from pathlib import Path
 import os
+import pandas as pd
 
 # Create directories if they don't exist
 Path("mini-projeto-2-duckdb/data/landing/bike_store").mkdir(parents=True, exist_ok=True)
@@ -24,7 +25,11 @@ def escreve_delta(df, tableName, modoEscrita):
     write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta(tableName):
-    return DeltaTable(f'mini-projeto-2-duckdb/data/landing/bike_store/{tableName}')
+    path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
+    if not Path(path).exists():
+        # Cria tabela vazia se não existir
+        write_deltalake(path, pd.DataFrame(), mode='append')
+    return DeltaTable(path)
 
 arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']  # 'order_items', 'orders', 'stocks'
 
