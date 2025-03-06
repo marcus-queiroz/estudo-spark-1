@@ -51,7 +51,11 @@ def ler_delta_bronze(tableName):
     Returns:
         DataFrame com dados da tabela Bronze
     """
-    return DeltaTable(f'data/bronze/vendas/{tableName}').to_pandas()
+    try:
+        return DeltaTable(f'data/bronze/vendas/{tableName}').to_pandas()
+    except Exception:
+        # Retorna DataFrame vazio se tabela não existir
+        return con.sql(f"SELECT * FROM read_csv_auto('data/landing/bike_store/{tableName}.csv')").to_df()
 
 def ler_delta_silver(tableName):
     """
@@ -63,7 +67,11 @@ def ler_delta_silver(tableName):
     Returns:
         DataFrame com dados da tabela Silver
     """
-    return DeltaTable(f'data/silver/vendas/{tableName}').to_pandas()
+    try:
+        return DeltaTable(f'data/silver/vendas/{tableName}').to_pandas()
+    except Exception:
+        # Retorna DataFrame vazio se tabela não existir
+        return con.sql("SELECT NULL LIMIT 0").to_df()
 
 # Carrega todas as tabelas da camada Bronze
 brands = ler_delta_bronze('brands')
