@@ -28,7 +28,7 @@ import os
 
 con = duckdb.connect()
 
-# Salva um DataFrame como tabela Delta Lake.
+# Salva um DataFrame como tabela Delta Lake
 def escreve_delta(df, tableName, modoEscrita):
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -42,10 +42,9 @@ def ler_delta(tableName):
     except Exception:
         return None
 
-# Tabelas estáticas para processamento
+# Processamento tabelas estáticas
 arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores']
 
-# Processamento de tabelas estáticas e dimensionais
 for tabela in arquivos:
     new_df = con.sql(f"""
         SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/{tabela}.csv'
@@ -63,22 +62,18 @@ for tabela in arquivos:
                 predicate=f'target.{coluna}_id = source.{coluna}_id',
                 source_alias='source',
                 target_alias='target'
-            )
-            .when_not_matched_insert_all()
-            .execute()
+            ).when_not_matched_insert_all().execute()
         )
 
 # Processamento incremental de order_items
 order_items_delta = ler_delta('order_items')
 
 if order_items_delta is None:
-    df = con.sql("""
+    df_order_items = con.sql("""
         SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/order_items.csv'
     """).to_df()
-
-    escreve_delta(df, 'order_items', 'overwrite')
+    escreve_delta(df_order_items, 'order_items', 'overwrite')
 else:
-    # Registra Delta existente como view temporária
     order_items_df = order_items_delta.to_pyarrow_table().to_pandas()
     con.register('dlt_order_items', order_items_df)
 
@@ -103,23 +98,21 @@ if orders_delta is None:
     df_orders = con.sql("""
         SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
     """).to_df()
-    escreve_delta(df, 'orders', 'overwrite')
+    escreve_delta(df_orders, 'orders', 'overwrite')
 else:
-    # Registrar tabela Delta como view temporária
     orders_df = orders_delta.to_pyarrow_table().to_pandas()
     con.register('dlt_orders', orders_df)
 
-    # Consulta incremental corrigida
     df_incremental = con.sql("""
         WITH arquivo_orders AS (
             SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
         ),
         ultima_data AS (
-            SELECT MAX(order_date) AS order_date FROM dlt_orders
+            SELECT MAX(order_date) AS max_order_date FROM dlt_orders
         )
-
-        SELECT AR.* FROM arquivo_orders AR
-        WHERE AR.order_date > (SELECT order_date FROM ultima_data)
+        SELECT AR.*
+        FROM arquivo_orders AR
+        WHERE AR.order_date > (SELECT max_order_date FROM ultima_data)
     """).to_df()
 
     if len(df_incremental) > 0:
@@ -129,6 +122,8 @@ else:
 dados_stocks = con.sql("""
     SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/stocks.csv'
 """).to_df()
+
 escreve_delta(dados_stocks, 'stocks', 'overwrite')
 
 con.close()
+

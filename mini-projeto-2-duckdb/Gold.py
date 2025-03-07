@@ -24,263 +24,162 @@ Estratégias:
 - Geração de surrogate keys
 - Junção de dados entre dimensões e fatos
 """
-
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
+import os
 
-con = duckdb.connect()
+# Funções utilitárias
 
 def escreve_delta_gold(df, tableName, modoEscrita):
-    """
-    Salva um DataFrame como tabela Delta Lake na camada Gold.
-    
-    Args:
-        df (DataFrame): Dados a serem salvos
-        tableName (str): Nome da tabela
-        modoEscrita (str): Modo de escrita ('overwrite' ou 'append')
-    """
-    path = f'data/gold/vendas/{tableName}'
+    path = f'mini-projeto-2-duckdb/data/gold/vendas/{tableName}'
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     write_deltalake(path, df, mode=modoEscrita)
 
 def ler_delta_gold(tableName):
-    """
-    Lê uma tabela da camada Gold.
-    
-    Args:
-        tableName (str): Nome da tabela
-    
-    Returns:
-        DataFrame com dados da tabela Gold
-    """
-    return DeltaTable(f'data/gold/vendas/{tableName}').to_pandas()
+    path = f'mini-projeto-2-duckdb/data/gold/vendas/{tableName}'
+    try:
+        return DeltaTable(path).to_pandas()
+    except:
+        return None
 
 def ler_delta_silver(tableName):
-    """
-    Lê uma tabela da camada Silver.
-    
-    Args:
-        tableName (str): Nome da tabela
-    
-    Returns:
-        DataFrame com dados da tabela Silver
-    """
-    return DeltaTable(f'data/silver/vendas/{tableName}').to_pandas()
+    path = f'mini-projeto-2-duckdb/data/silver/vendas/{tableName}'
+    return DeltaTable(path).to_pandas()
 
-# Restante do código permanece igual
+# Conexão DuckDB
+con = duckdb.connect()
+
+# Carrega orders_sales da Silver
 orders_sales = ler_delta_silver('orders_sales')
+con.register('orders_sales', orders_sales)
 
-dtl_gold_products = ler_delta_gold('dim_products')
+# Criação explícita das dimensões com surrogate keys
 
+# Dimensão Produtos
 dim_products = con.sql("""
-    WITH products as
-    (
+    WITH produtos AS (
         SELECT DISTINCT
-            product_id
-            ,product_name
-            ,brand_name
-            ,category_name
+            product_id,
+            product_name,
+            brand_name,
+            category_name
         FROM orders_sales
     ),
-    sk_products as
-    (
+    sk_produtos AS (
         SELECT
-            row_number() OVER (ORDER BY product_id) as product_sk
-            ,product_id
-            ,product_name
-            ,brand_name
-            ,category_name
-        FROM products
-    ),
-    dt_gold_products
-    (
-        SELECT DISTINCT product_id FROM dtl_gold_products
+            ROW_NUMBER() OVER (ORDER BY product_id) AS product_sk,
+            *
+        FROM produtos
     )
-
-    SELECT * FROM sk_products
-    WHERE product_id NOT IN (SELECT product_id FROM dt_gold_products)
+    SELECT * FROM sk_produtos
 """).to_df()
 
-escreve_delta_gold(dim_products, 'dim_products', 'append')
+escreve_delta_gold(dim_products, 'dim_products', 'overwrite')
 
-# Restante do código permanece igual
-dtl_gold_customers = ler_delta_gold('dim_customers')
-
+# Dimensão Clientes
 dim_customers = con.sql("""
-    WITH customers as
-    (
+    WITH clientes AS (
         SELECT DISTINCT
-            customer_id
-            ,customer_name
+            customer_id,
+            customer_name
         FROM orders_sales
     ),
-    sk_customers as
-    (
+    sk_clientes AS (
         SELECT
-            row_number() OVER (ORDER BY customer_id) as customer_sk
-            ,*
-        FROM customers
-    ),
-    dt_gold_customers as
-    (
-        SELECT DISTINCT customer_id FROM dtl_gold_customers
+            ROW_NUMBER() OVER (ORDER BY customer_id) AS customer_sk,
+            *
+        FROM clientes
     )
-
-    SELECT * FROM sk_customers
-    WHERE customer_id NOT IN (SELECT customer_id FROM dt_gold_customers)
+    SELECT * FROM sk_clientes
 """).to_df()
 
-escreve_delta_gold(dim_customers, 'dim_customers', 'append')
+escreve_delta_gold(dim_customers, 'dim_customers', 'overwrite')
 
-# Restante do código permanece igual
-dtl_gold_staffs = ler_delta_gold('dim_staffs')
-
+# Dimensão Funcionários
 dim_staffs = con.sql("""
-    WITH staffs as
-    (
+    WITH staffs AS (
         SELECT DISTINCT
-            staff_id
-            ,staff_name
+            staff_id,
+            staff_name
         FROM orders_sales
     ),
-    sk_staffs as
-    (
+    sk_staffs AS (
         SELECT
-            row_number() OVER (ORDER BY staff_id) as staff_sk
-            ,*
+            ROW_NUMBER() OVER (ORDER BY staff_id) AS staff_sk,
+            *
         FROM staffs
-    ),
-    dt_gold_staffs as
-    (
-        SELECT DISTINCT staff_id FROM dtl_gold_staffs
     )
-
     SELECT * FROM sk_staffs
-    WHERE staff_id NOT IN (SELECT staff_id FROM dt_gold_staffs)
 """).to_df()
 
-escreve_delta_gold(dim_staffs, 'dim_staffs', 'append')
+escreve_delta_gold(dim_staffs, 'dim_staffs', 'overwrite')
 
-# Restante do código permanece igual
-dtl_gold_stores = ler_delta_gold('dim_stores')
-
+# Dimensão Lojas
 dim_stores = con.sql("""
-    WITH stores as
-    (
+    WITH stores AS (
         SELECT DISTINCT
-            store_id
-            ,store_name
+            store_id,
+            store_name
         FROM orders_sales
     ),
-    sk_stores as
-    (
+    sk_stores AS (
         SELECT
-            row_number() OVER (ORDER BY store_id) as store_sk
-            ,*
+            ROW_NUMBER() OVER (ORDER BY store_id) AS store_sk,
+            *
         FROM stores
-    ),
-    dt_gold_stores as
-    (
-        SELECT DISTINCT store_id FROM dtl_gold_stores
     )
-
     SELECT * FROM sk_stores
-    WHERE store_id NOT IN (SELECT store_id FROM dt_gold_stores)
 """).to_df()
 
-escreve_delta_gold(dim_stores, 'dim_stores', 'append')
+escreve_delta_gold(dim_stores, 'dim_stores', 'overwrite')
 
-# Restante do código permanece igual
+# Processa Dimensão Data
 dim_date = con.sql("""
-    WITH tempo as
-    (
+    WITH tempo AS (
         SELECT
-            cast(strftime(generate_series, '%Y%m%d') as int) as date_id
-            ,generate_series as date
-            ,year(generate_series) as year
-            ,month(generate_series) as month
-            ,day(generate_series) as day
-        FROM generate_series(DATE '2010-01-01',
- DATE '2030-12-31', INTERVAL '1 DAY')
-    ),
-    sk_date as
-    (
-        SELECT
-            row_number() OVER (ORDER BY date_id) as date_sk
-            ,*
-        FROM tempo
+            CAST(strftime(generate_series, '%Y%m%d') AS INTEGER) AS date_id,
+            generate_series AS date,
+            year(generate_series) AS year,
+            month(generate_series) AS month,
+            day(generate_series) AS day
+        FROM generate_series(DATE '2010-01-01', DATE '2030-12-31', INTERVAL '1 DAY')
     )
-
-    SELECT * FROM sk_date
+    SELECT ROW_NUMBER() OVER (ORDER BY date_id) AS date_sk, * FROM tempo
 """).to_df()
 
-escreve_delta_gold(dim_date, 'dim_date', 'append')
+escreve_delta_gold(dim_date, 'dim_date', 'overwrite')
 
-# Restante do código permanece igual
-dim_products = ler_delta_gold('dim_products')
-dim_customers = ler_delta_gold('dim_customers')
-dim_staffs = ler_delta_gold('dim_staffs')
-dim_stores = ler_delta_gold('dim_stores')
-dim_date = ler_delta_gold('dim_date')
+# Registrar dimensões
+con.register('dim_products', dim_products)
+con.register('dim_customers', dim_customers)
+con.register('dim_staffs', dim_staffs)
+con.register('dim_stores', dim_stores)
+con.register('dim_date', dim_date)
 
-dtl_gold_fact_sales = ler_delta_gold('fact_sales')
-
+# Criação do fato vendas
 fact_sales = con.sql("""
     SELECT
-        P.product_sk
-        ,C.customer_sk
-        ,ST.staff_sk
-        ,S.store_sk
-        ,D.date_sk
-        ,OS.item_id
-        ,OS.order_id
-        ,OS.order_date
-        ,OS.quantity
-        ,OS.list_price
-        ,OS.discount
+        P.product_sk,
+        C.customer_sk,
+        ST.staff_sk,
+        S.store_sk,
+        D.date_sk,
+        OS.item_id,
+        OS.order_id,
+        OS.order_date,
+        OS.quantity,
+        OS.list_price,
+        OS.discount
     FROM orders_sales OS
     LEFT JOIN dim_products P ON OS.product_id = P.product_id
     LEFT JOIN dim_customers C ON OS.customer_id = C.customer_id
-    LEFT JOIN dim_staffs S ON OS.staff_id = S.staff_id
+    LEFT JOIN dim_staffs ST ON OS.staff_id = ST.staff_id
     LEFT JOIN dim_stores S ON OS.store_id = S.store_id
-    LEFT JOIN dim_date D ON cast(strftime(OS.order_date, '%Y%m%d') as int) = D.date_id
-    WHERE OS.order_date >
-    (SELECT MAX(order_date) FROM dtl_gold_fact_sales)
+    LEFT JOIN dim_date D ON CAST(strftime(OS.order_date, '%Y%m%d') AS INT) = D.date_id
 """).to_df()
 
 escreve_delta_gold(fact_sales, 'fact_sales', 'append')
 
-# Restante do código permanece igual
-stocks_snapshot = ler_delta_silver('stocks_snapshot')
-
-dtl_gold_fact_stocks = ler_delta_gold('fact_stocks')
-
-fact_stocks = con.sql("""
-    SELECT
-        P.product_sk
-        ,S.store_sk
-        ,D.date_sk
-        ,SS.quantity
-    FROM stocks_snapshot SS
-    LEFT JOIN dim_products P ON SS.product_id = P.product_id
-    LEFT JOIN dim_stores S ON SS.store_id = S.store_id
-    LEFT JOIN dim_date D ON cast(strftime(SS.dt_stock, '%Y%m%d') as int) = D.date_id
-    WHERE SS.dt_stock >
-    (
-        SELECT
-            MAX(D.date)
-        FROM dtl_gold_fact_stocks FS
-        LEFT JOIN dim_date D ON FS.date_SK = D.date_SK
-    )
-""").to_df()
-
-escreve_delta_gold(fact_stocks, 'fact_stocks', 'append')
-
+# Fecha conexão
 con.close()
-
-
-
-
-
-
-

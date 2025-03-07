@@ -2,70 +2,61 @@
 
 ## Visão Geral
 
-Este projeto implementa um pipeline de processamento de dados utilizando DuckDB e Delta Lake, seguindo uma arquitetura de medalhas (Bronze, Silver, Gold) para transformação e enriquecimento de dados.
+Este projeto implementa um pipeline completo de processamento de dados utilizando DuckDB e Delta Lake, estruturado em uma arquitetura de camadas (Landing, Bronze, Silver e Gold), ideal para processos de Data Engineering e Business Intelligence.
 
-## Arquitetura de Dados
+## Estrutura do Projeto
 
-### Camadas de Processamento
+### 1. Camada Landing (`Landing.py`)
 
-1. **Landing Layer (Landing.py)**
-   - Responsável por coletar e preparar dados brutos
-   - Localiza arquivos CSV na fonte original
-   - Copia arquivos para diretório de preparação
+Responsável por:
+- Identificar e coletar arquivos CSV brutos originais.
+- Copiar arquivos CSV para um diretório intermediário de preparação para processamento posterior.
 
-2. **Bronze Layer (Bronze.py)**
-   - Processa dados brutos e os converte para formato Delta Lake
-   - Realiza processamento incremental
-   - Estratégias:
-     * Primeira execução: Cria tabelas
-     * Execuções subsequentes: Adiciona novos registros
+### 2. Camada Bronze (`Bronze.py`)
 
-3. **Silver Layer (Silver.py)**
-   - Transforma e enriquece dados da camada Bronze
-   - Realiza junções entre múltiplas tabelas
-   - Cria visões consolidadas
-   - Gera snapshots de dados
+Responsável por:
+- Ler os arquivos CSV da camada Landing.
+- Processar e armazenar dados brutos em tabelas Delta Lake.
+- Aplicar lógica incremental para evitar processamento redundante.
 
-4. **Gold Layer (Gold.py)**
-   - Cria dimensões e fatos para data warehouse
-   - Gera surrogate keys
-   - Prepara dados para análise e visualização
+### 3. Camada Silver (`Silver.py`)
+
+Responsável por:
+- Realizar junções e transformações nos dados da camada Bronze.
+- Criar visões consolidadas e enriquecidas para análises detalhadas.
+- Gerar snapshots incrementais para acompanhamento histórico.
+
+### 4. Camada Gold (`Gold.py`)
+
+Responsável por:
+- Criar dimensões e fatos, estruturando um modelo dimensional para Data Warehouse.
+- Gerar surrogate keys para garantir integridade e performance.
+- Preparar dados finais para análise, visualização e relatórios de BI.
 
 ## Tecnologias Utilizadas
 
-- Python
-- DuckDB
-- Delta Lake
-- Pandas
+- **Python**: Linguagem principal utilizada para todo o desenvolvimento.
+- **DuckDB**: Banco de dados analítico eficiente para consultas rápidas.
+- **Delta Lake**: Armazenamento estruturado que suporta processamento incremental e versionamento.
+- **Pandas**: Biblioteca Python para manipulação eficiente dos dados.
 
-## Fluxo de Processamento
+## Como Executar o Pipeline
 
-1. Executar `Landing.py` para preparar dados brutos
-2. Executar `Bronze.py` para processar dados em Delta Lake
-3. Executar `Silver.py` para transformar e enriquecer dados
-4. Executar `Gold.py` para criar modelo dimensional
+### Pré-requisitos
+- Python 3.8 ou superior
 
-## Pré-requisitos
-
-- Python 3.8+
-- Bibliotecas:
-  * deltalake
-  * duckdb
-  * pandas
-
-## Instalação de Dependências
-
+### Instalação das Dependências
 ```bash
-pip install deltalake duckdb pandas
+poetry add deltalake duckdb pandas
 ```
 
-## Execução do Pipeline
-
+### Execução
+Para executar todo o pipeline:
 ```bash
-python Landing.py
-python Bronze.py
-python Silver.py
-python Gold.py
+poetry run python mini-projeto-2-duckdb/Landing.py
+poetry run python mini-projeto-2-duckdb/Bronze.py
+poetry run python mini-projeto-2-duckdb/Silver.py
+poetry run python mini-projeto-2-duckdb/Gold.py
 ```
 
 ## Estrutura de Diretórios
@@ -74,119 +65,24 @@ python Gold.py
 mini-projeto-2-duckdb/
 │
 ├── data/
-│   ├── BikeStore/         # Fonte de dados original
-│   ├── landing/           # Dados brutos preparados
-│   ├── bronze/            # Dados processados em Delta Lake
-│   ├── silver/            # Dados transformados
-│   └── gold/              # Modelo dimensional
+│   ├── BikeStore/         # Dados originais
+│   ├── landing/           # Dados preparados
+│   ├── bronze/            # Dados armazenados em formato Delta
+│   ├── silver/            # Dados enriquecidos
+│   └── gold/              # Modelo dimensional final
 │
-├── Landing.py             # Preparação de dados
-├── Bronze.py              # Processamento inicial
-├── Silver.py              # Transformação de dados
-└── Gold.py               # Criação de modelo dimensional
+├── Landing.py             # Coleta e preparação de dados
+├── Bronze.py              # Processamento inicial incremental
+├── Silver.py              # Transformações e enriquecimento de dados
+└── Gold.py                # Criação de dimensões e fatos para o DW
 ```
 
-## Considerações
+## Benefícios da Implementação
 
-- Pipeline projetado para processamento incremental
-- Suporta adição de novos registros sem reprocessar dados existentes
-- Utiliza Delta Lake para versionamento e gerenciamento de dados
+- Processamento incremental robusto, economizando recursos computacionais.
+- Dados organizados para análise eficiente e ágil.
+- Estrutura escalável e flexível, permitindo fácil adaptação para novos requisitos.
+- Versionamento automático através do uso do Delta Lake.
 
-## Licença
-
-[Especificar licença do projeto]
-# Projeto de Processamento de Dados com DuckDB e Delta Lake
-
-## Visão Geral
-
-Este projeto implementa um pipeline de processamento de dados utilizando DuckDB e Delta Lake, seguindo uma arquitetura de medalhas (Bronze, Silver, Gold) para transformação e enriquecimento de dados.
-
-## Arquitetura de Dados
-
-### Camadas de Processamento
-
-1. **Landing Layer (Landing.py)**
-   - Responsável por coletar e preparar dados brutos
-   - Localiza arquivos CSV na fonte original
-   - Copia arquivos para diretório de preparação
-
-2. **Bronze Layer (Bronze.py)**
-   - Processa dados brutos e os converte para formato Delta Lake
-   - Realiza processamento incremental
-   - Estratégias:
-     * Primeira execução: Cria tabelas
-     * Execuções subsequentes: Adiciona novos registros
-
-3. **Silver Layer (Silver.py)**
-   - Transforma e enriquece dados da camada Bronze
-   - Realiza junções entre múltiplas tabelas
-   - Cria visões consolidadas
-   - Gera snapshots de dados
-
-4. **Gold Layer (Gold.py)**
-   - Cria dimensões e fatos para data warehouse
-   - Gera surrogate keys
-   - Prepara dados para análise e visualização
-
-## Tecnologias Utilizadas
-
-- Python
-- DuckDB
-- Delta Lake
-- Pandas
-
-## Fluxo de Processamento
-
-1. Executar `Landing.py` para preparar dados brutos
-2. Executar `Bronze.py` para processar dados em Delta Lake
-3. Executar `Silver.py` para transformar e enriquecer dados
-4. Executar `Gold.py` para criar modelo dimensional
-
-## Pré-requisitos
-
-- Python 3.8+
-- Bibliotecas:
-  * deltalake
-  * duckdb
-  * pandas
-
-## Instalação de Dependências
-
-```bash
-pip install deltalake duckdb pandas
-```
-
-## Execução do Pipeline
-
-```bash
-python Landing.py
-python Bronze.py
-python Silver.py
-python Gold.py
-```
-
-## Estrutura de Diretórios
-
-```
-mini-projeto-2-duckdb/
-│
-├── data/
-│   ├── BikeStore/         # Fonte de dados original
-│   ├── landing/           # Dados brutos preparados
-│   ├── bronze/            # Dados processados em Delta Lake
-│   ├── silver/            # Dados transformados
-│   └── gold/              # Modelo dimensional
-│
-├── Landing.py             # Preparação de dados
-├── Bronze.py              # Processamento inicial
-├── Silver.py              # Transformação de dados
-└── Gold.py               # Criação de modelo dimensional
-```
-
-## Considerações
-
-- Pipeline projetado para processamento incremental
-- Suporta adição de novos registros sem reprocessar dados existentes
-- Utiliza Delta Lake para versionamento e gerenciamento de dados
 
 

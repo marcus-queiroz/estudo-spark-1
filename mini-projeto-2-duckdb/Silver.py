@@ -22,50 +22,35 @@ Estratégias:
 - Processamento incremental de orders_sales
 - Geração de snapshot de estoques a cada execução
 """
-
 from deltalake.writer import write_deltalake
 from deltalake import DeltaTable
 import duckdb
+import os
 
 con = duckdb.connect()
 
+# Função para salvar DataFrame como tabela Delta na camada Silver
+
 def escreve_delta_silver(df, tableName, modoEscrita):
-    """
-    Salva um DataFrame como tabela Delta Lake na camada Silver.
-    
-    Args:
-        df (DataFrame): Dados a serem salvos
-        tableName (str): Nome da tabela
-        modoEscrita (str): Modo de escrita ('overwrite' ou 'append')
-    """
-    path = f'data/silver/vendas/{tableName}'
+    path = f'mini-projeto-2-duckdb/data/silver/vendas/{tableName}'
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     write_deltalake(path, df, mode=modoEscrita)
 
+# Lê tabelas das camadas
+
 def ler_delta_bronze(tableName):
-    """
-    Lê uma tabela da camada Bronze.
-    
-    Args:
-        tableName (str): Nome da tabela
-    
-    Returns:
-        DataFrame com dados da tabela Bronze
-    """
-    return DeltaTable(f'data/bronze/vendas/{tableName}').to_pandas()
+    path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
+    return DeltaTable(path).to_pandas()
+
 
 def ler_delta_silver(tableName):
-    """
-    Lê uma tabela da camada Silver.
-    
-    Args:
-        tableName (str): Nome da tabela
-    
-    Returns:
-        DataFrame com dados da tabela Silver
-    """
-    return DeltaTable(f'data/silver/vendas/{tableName}').to_pandas()
+    path = f'mini-projeto-2-duckdb/data/silver/vendas/{tableName}'
+    try:
+        return DeltaTable(path).to_pandas()
+    except Exception:
+        return None
 
-# Carrega todas as tabelas da camada Bronze
+# Carregar tabelas Bronze
 brands = ler_delta_bronze('brands')
 categories = ler_delta_bronze('categories')
 customers = ler_delta_bronze('customers')
@@ -76,58 +61,95 @@ staffs = ler_delta_bronze('staffs')
 stocks = ler_delta_bronze('stocks')
 stores = ler_delta_bronze('stores')
 
-# Recupera dados existentes de orders_sales na camada Silver
+# Registrar tabelas no DuckDB
+con.register('brands', brands)
+con.register('categories', categories)
+con.register('customers', customers)
+con.register('order_items', order_items)
+con.register('orders', orders)
+con.register('products', products)
+con.register('staffs', staffs)
+con.register('stores', stores)
+
+# Carrega dados existentes de orders_sales na Silver
 dtl_orders_sales = ler_delta_silver('orders_sales')
 
-# Processa orders_sales com junções e enriquecimento
-orders_sales = con.sql("""
-    WITH orders_sales_bronze as
-    (
+if dtl_orders_sales is not None:
+    con.register('dtl_orders_sales', dtl_orders_sales)
+    # Obtém a última data processada
+    ultima_data = con.execute("SELECT MAX(order_date) as last_date FROM dtl_orders_sales").fetchone()[0]
+
+    # Incremental baseado na última data
+    orders_sales_incremental = con.sql(f"""
         SELECT
-            P.product_id
-            ,P.product_name
-            ,B.brand_name
-            ,CT.category_name
-            ,C.customer_id
-            ,C.first_name || C.last_name AS customer_name
-            ,S.staff_id
-            ,S.first_name || S.last_name AS staff_name
-            ,ST.store_id
-            ,ST.store_name
-            ,OI.order_id
-            ,OI.item_id
-            ,O.order_date
-            ,OI.quantity
-            ,OI.list_price
-            ,OI.discount
+            P.product_id,
+            P.product_name,
+            B.brand_name,
+            CT.category_name,
+            C.customer_id,
+            C.first_name || ' ' || C.last_name AS customer_name,
+            ST.staff_id,
+            ST.first_name || ' ' || ST.last_name AS staff_name,
+            S.store_id,
+            S.store_name,
+            OI.order_id,
+            OI.item_id,
+            O.order_date,
+            OI.quantity,
+            OI.list_price,
+            OI.discount
         FROM order_items OI
         LEFT JOIN orders O ON OI.order_id = O.order_id
         LEFT JOIN products P ON P.product_id = OI.product_id
         LEFT JOIN brands B ON P.brand_id = B.brand_id
         LEFT JOIN categories CT ON P.category_id = CT.category_id
         LEFT JOIN customers C ON C.customer_id = O.customer_id
-        LEFT JOIN staffs S ON S.staff_id = O.staff_id
-        LEFT JOIN stores ST ON ST.store_id = O.store_id
-    ),
-    dt_orders_sales as
-    (
-        SELECT MAX(order_date) AS order_date FROM dtl_orders_sales
-    )
-                       
-    SELECT * FROM orders_sales_bronze
-    WHERE order_date > (SELECT order_date FROM dt_orders_sales)
-                       
+        LEFT JOIN staffs ST ON ST.staff_id = O.staff_id
+        LEFT JOIN stores S ON S.store_id = O.store_id
+        WHERE O.order_date > (SELECT MAX(order_date) FROM dtl_orders_sales)
     """).to_df()
 
-# Salva orders_sales incrementalmente
-if len(orders_sales) > 0:
-    escreve_delta_silver(orders_sales, 'orders_sales', 'append')
+    if not orders_sales_incremental.empty:
+        escreve_delta_silver(orders_sales_incremental, 'orders_sales', 'append')
+    else:
+        print("Nenhum dado novo encontrado para orders_sales.")
+else:
+    # Primeira execução - carga completa
+    orders_sales = con.sql("""
+        SELECT
+            P.product_id,
+            P.product_name,
+            B.brand_name,
+            CT.category_name,
+            C.customer_id,
+            C.first_name || ' ' || C.last_name AS customer_name,
+            ST.staff_id,
+            ST.first_name || ' ' || ST.last_name AS staff_name,
+            S.store_id,
+            S.store_name,
+            OI.order_id,
+            OI.item_id,
+            O.order_date,
+            OI.quantity,
+            OI.list_price,
+            OI.discount
+        FROM order_items OI
+        LEFT JOIN orders O ON OI.order_id = O.order_id
+        LEFT JOIN products P ON P.product_id = OI.product_id
+        LEFT JOIN brands B ON P.brand_id = B.brand_id
+        LEFT JOIN categories CT ON P.category_id = CT.category_id
+        LEFT JOIN customers C ON C.customer_id = O.customer_id
+        LEFT JOIN staffs ST ON ST.staff_id = O.staff_id
+        LEFT JOIN stores S ON S.store_id = O.store_id
+    """).to_df()
 
-# Cria snapshot de estoques com data atual
+    escreve_delta_silver(orders_sales, 'orders_sales', 'overwrite')
+
+# Geração diária do snapshot de estoques
 stocks_snapshot = con.sql("""
     SELECT *, current_date as dt_stock FROM stocks
-    """).to_df()
+""").to_df()
+
 escreve_delta_silver(stocks_snapshot, 'stocks_snapshot', 'append')
 
 con.close()
-
