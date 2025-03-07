@@ -54,8 +54,53 @@ def ler_delta_bronze(tableName):
     try:
         return DeltaTable(f'data/bronze/vendas/{tableName}').to_pandas()
     except Exception:
-        # Retorna DataFrame vazio se tabela não existir
-        return con.sql(f"SELECT * FROM read_csv_auto('data/landing/bike_store/{tableName}.csv')").to_df()
+        # Retorna DataFrame vazio com schema básico se tabela não existir
+        if tableName == 'brands':
+            return con.sql("SELECT NULL::INTEGER AS brand_id, NULL::VARCHAR AS brand_name LIMIT 0").to_df()
+        elif tableName == 'categories':
+            return con.sql("SELECT NULL::INTEGER AS category_id, NULL::VARCHAR AS category_name LIMIT 0").to_df()
+        elif tableName == 'customers':
+            return con.sql("""
+                SELECT NULL::INTEGER AS customer_id, NULL::VARCHAR AS first_name, 
+                       NULL::VARCHAR AS last_name, NULL::VARCHAR AS phone, NULL::VARCHAR AS email,
+                       NULL::VARCHAR AS street, NULL::VARCHAR AS city, NULL::VARCHAR AS state,
+                       NULL::VARCHAR AS zip_code LIMIT 0
+            """).to_df()
+        elif tableName == 'order_items':
+            return con.sql("""
+                SELECT NULL::INTEGER AS order_id, NULL::INTEGER AS item_id, NULL::INTEGER AS product_id,
+                       NULL::INTEGER AS quantity, NULL::DECIMAL(10,2) AS list_price, 
+                       NULL::DECIMAL(4,2) AS discount LIMIT 0
+            """).to_df()
+        elif tableName == 'orders':
+            return con.sql("""
+                SELECT NULL::INTEGER AS order_id, NULL::INTEGER AS customer_id, NULL::INTEGER AS order_status,
+                       NULL::DATE AS order_date, NULL::DATE AS required_date, NULL::DATE AS shipped_date,
+                       NULL::INTEGER AS store_id, NULL::INTEGER AS staff_id LIMIT 0
+            """).to_df()
+        elif tableName == 'products':
+            return con.sql("""
+                SELECT NULL::INTEGER AS product_id, NULL::VARCHAR AS product_name, NULL::INTEGER AS brand_id,
+                       NULL::INTEGER AS category_id, NULL::INTEGER AS model_year, NULL::DECIMAL(10,2) AS list_price LIMIT 0
+            """).to_df()
+        elif tableName == 'staffs':
+            return con.sql("""
+                SELECT NULL::INTEGER AS staff_id, NULL::VARCHAR AS first_name, NULL::VARCHAR AS last_name,
+                       NULL::VARCHAR AS email, NULL::VARCHAR AS phone, NULL::INTEGER AS active,
+                       NULL::INTEGER AS store_id, NULL::INTEGER AS manager_id LIMIT 0
+            """).to_df()
+        elif tableName == 'stocks':
+            return con.sql("""
+                SELECT NULL::INTEGER AS store_id, NULL::INTEGER AS product_id, NULL::INTEGER AS quantity LIMIT 0
+            """).to_df()
+        elif tableName == 'stores':
+            return con.sql("""
+                SELECT NULL::INTEGER AS store_id, NULL::VARCHAR AS store_name, NULL::VARCHAR AS phone,
+                       NULL::VARCHAR AS email, NULL::VARCHAR AS street, NULL::VARCHAR AS city,
+                       NULL::VARCHAR AS state, NULL::VARCHAR AS zip_code LIMIT 0
+            """).to_df()
+        else:
+            return con.sql("SELECT NULL LIMIT 0").to_df()
 
 def ler_delta_silver(tableName):
     """
