@@ -29,29 +29,14 @@ import os
 
 con = duckdb.connect()
 
+# Salva um DataFrame como tabela Delta Lake.
 def escreve_delta(df, tableName, modoEscrita):
-    """
-    Salva um DataFrame como tabela Delta Lake.
-    
-    Args:
-        df (DataFrame): Dados a serem salvos
-        tableName (str): Nome da tabela
-        modoEscrita (str): Modo de escrita ('overwrite' ou 'append')
-    """
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
     os.makedirs(os.path.dirname(path), exist_ok=True)
     write_deltalake(path, df, mode=modoEscrita)
 
+# Lê uma tabela Delta Lake existente.
 def ler_delta(tableName):
-    """
-    Lê uma tabela Delta Lake existente.
-    
-    Args:
-        tableName (str): Nome da tabela
-    
-    Returns:
-        DeltaTable ou None se a tabela não existir
-    """
     path = f'mini-projeto-2-duckdb/data/bronze/vendas/{tableName}'
     try:
         return DeltaTable(path)
@@ -59,7 +44,7 @@ def ler_delta(tableName):
         return None
 
 # Lista de tabelas para processamento
-arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores', 'order_items', 'orders', 'stocks']
+arquivos = ['brands', 'categories', 'customers', 'products', 'staffs', 'stores'] #'order_items', 'orders', 'stocks'
 
 # Processamento de tabelas estáticas e dimensionais
 for tabela in arquivos:
