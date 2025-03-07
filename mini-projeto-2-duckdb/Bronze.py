@@ -70,48 +70,64 @@ for tabela in arquivos:
             .execute()
         )
 
-# Processamento de order_items com lógica incremental
-order_items = ler_delta('order_items')
-order_items = order_items.to_pandas() if order_items is not None else None
+# Processamento de order_items
+order_items_delta = ler_delta('order_items')
 
 df = con.sql("""
-            with dlt_order_items AS 
-            (
-                select * from order_items
-            ), 
-            arquivo_items AS 
-            (
-                select * from 'mini-projeto-2-duckdb/data/landing/bike_store/order_items.csv'
-            )
-            SELECT AR.* FROM arquivo_items AR
-            LEFT JOIN dlt_order_items DLT
-            ON hash(AR.order_id, AR.item_id, AR.product_id) = hash(DLT.order_id, DLT.item_id, DLT.product_id)
-            WHERE DLT.order_id IS NULL
-            """)
+    SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/order_items.csv'
+""")
 
-if len(df) > 0:
-    escreve_delta(df, 'order_items', 'append')
+if order_items_delta is None:
+    # Se a tabela Delta não existir, carrega todos os dados
+    escreve_delta(df, 'order_items', 'overwrite')
+else:
+    # Lógica incremental como estava antes
+    df_incremental = con.sql("""
+        with dlt_order_items AS 
+        (
+            select * from order_items
+        ), 
+        arquivo_items AS 
+        (
+            select * from 'mini-projeto-2-duckdb/data/landing/bike_store/order_items.csv'
+        )
+        SELECT AR.* FROM arquivo_items AR
+        LEFT JOIN dlt_order_items DLT
+        ON hash(AR.order_id, AR.item_id, AR.product_id) = hash(DLT.order_id, DLT.item_id, DLT.product_id)
+        WHERE DLT.order_id IS NULL
+        """)
 
-# Processamento de orders com filtro de data
-orders = ler_delta('orders')
-orders = orders.to_pandas() if orders is not None else None
+    if len(df_incremental) > 0:
+        escreve_delta(df_incremental, 'order_items', 'append')
+
+# Processamento de orders
+orders_delta = ler_delta('orders')
 
 df = con.sql("""
-            WITH arquivo_orders AS
-            (
-                SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
-            ),
-            dtl_orders AS
-            (
-                SELECT MAX(order_date) AS order_date FROM orders
-            )
+    SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
+""")
 
-            SELECT ar.* FROM arquivo_orders ar
-            WHERE ar.order_date > (SELECT order_date FROM dtl_orders)
-            """)
+if orders_delta is None:
+    # Se a tabela Delta não existir, carrega todos os dados
+    escreve_delta(df, 'orders', 'overwrite')
+else:
+    # Lógica incremental como estava antes
+    df_incremental = con.sql("""
+        WITH arquivo_orders AS
+        (
+            SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/orders.csv'
+        ),
+        dtl_orders AS
+        (
+            SELECT MAX(order_date) AS order_date FROM orders
+        )
 
-if len(df) > 0:
-    escreve_delta(df, 'orders', 'append')
+        SELECT ar.* FROM arquivo_orders ar
+        WHERE ar.order_date > (SELECT order_date FROM dtl_orders)
+        """)
+
+    if len(df_incremental) > 0:
+        escreve_delta(df_incremental, 'orders', 'append')
 
 # Processamento dos estoques (sempre sobrescreve)
 dados = con.sql("SELECT * FROM 'mini-projeto-2-duckdb/data/landing/bike_store/stocks.csv'").to_df()
