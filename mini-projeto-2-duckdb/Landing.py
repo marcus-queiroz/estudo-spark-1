@@ -11,7 +11,7 @@ Fluxo de Processamento:
 1. Identifica todos os arquivos CSV na pasta de origem
 2. Cria diretório de destino se não existir
 3. Copia cada arquivo para o diretório de destino
-4. Imprime log de cada arquivo copiado
+4. Imprime log de cada arquivo copiado, se existir sobrescreve
 
 Variáveis:
 - arquivos_bs: Lista de caminhos de arquivos CSV na fonte original
@@ -26,7 +26,7 @@ import glob
 # Localiza arquivos CSV na fonte original
 arquivos_bs = glob.glob('mini-projeto-2-duckdb/data/BikeStore/*.csv')
 
-# Cria diretório de destino, permitindo múltiplas execuções
+# Cria diretório de destino
 os.makedirs('mini-projeto-2-duckdb/data/landing/bike_store', exist_ok=True)
 
 # Processa e copia cada arquivo
